@@ -1,17 +1,17 @@
 package app
 
 import (
-	api "chat-server/internal/api/grpc/message"
-	"chat-server/internal/client/db"
-	"chat-server/internal/client/db/pg"
-	"chat-server/internal/client/db/transaction"
-	"chat-server/internal/closer"
-	"chat-server/internal/config"
-	"chat-server/internal/repository"
-	repo "chat-server/internal/repository/message"
-	"chat-server/internal/service"
-	serviceImpl "chat-server/internal/service/message"
 	"context"
+	api "github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message"
+	"github.com/PerfilievAlexandr/chat-server/internal/config"
+	"github.com/PerfilievAlexandr/chat-server/internal/repository"
+	repo "github.com/PerfilievAlexandr/chat-server/internal/repository/message"
+	"github.com/PerfilievAlexandr/chat-server/internal/service"
+	serviceImpl "github.com/PerfilievAlexandr/chat-server/internal/service/message"
+	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
+	"github.com/PerfilievAlexandr/platform_common/pkg/db"
+	"github.com/PerfilievAlexandr/platform_common/pkg/db/pg"
+	"github.com/PerfilievAlexandr/platform_common/pkg/db/transaction"
 	"log"
 )
 
@@ -68,7 +68,7 @@ func (p *diProvider) Db(ctx context.Context) db.Client {
 
 func (p *diProvider) TxManager(ctx context.Context) db.TxManager {
 	if p.txManager == nil {
-		p.txManager = transaction.New(ctx, p.Db(ctx))
+		p.txManager = transaction.NewTransactionManager(p.Db(ctx))
 	}
 
 	return p.txManager

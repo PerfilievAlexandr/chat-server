@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	"chat-server/internal/domain"
-	"chat-server/internal/repository/message/dto"
+	"github.com/PerfilievAlexandr/chat-server/internal/domain"
+	"github.com/PerfilievAlexandr/chat-server/internal/repository/message/dto"
 )
 
 func ToMessageFromDbMessage(dbMessage *dto.MessageDb) *domain.Message {

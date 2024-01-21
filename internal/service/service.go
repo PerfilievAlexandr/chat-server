@@ -1,8 +1,8 @@
 package service
 
 import (
-	"chat-server/internal/api/grpc/message/dto"
 	"context"
+	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message/dto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

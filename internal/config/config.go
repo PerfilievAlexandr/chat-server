@@ -1,10 +1,10 @@
 package config
 
 import (
-	dbConfig "chat-server/internal/config/db"
-	grpcConfig "chat-server/internal/config/grpc"
-	configInterface "chat-server/internal/config/interface"
 	"context"
+	dbConfig "github.com/PerfilievAlexandr/chat-server/internal/config/db"
+	grpcConfig "github.com/PerfilievAlexandr/chat-server/internal/config/grpc"
+	configInterface "github.com/PerfilievAlexandr/chat-server/internal/config/interface"
 	"github.com/joho/godotenv"
 	"log"
 )

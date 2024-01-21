@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	"chat-server/internal/api/grpc/message/dto"
-	proto "chat-server/pkg/chat_v1"
+	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message/dto"
+	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
 )
 
 func MapToCreateRequest(req *proto.CreteRequest) *dto.CreateRequest {

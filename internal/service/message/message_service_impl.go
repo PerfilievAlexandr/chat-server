@@ -1,11 +1,11 @@
 package message
 
 import (
-	"chat-server/internal/api/grpc/message/dto"
-	"chat-server/internal/client/db"
-	"chat-server/internal/repository"
-	"chat-server/internal/service"
 	"context"
+	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message/dto"
+	"github.com/PerfilievAlexandr/chat-server/internal/repository"
+	"github.com/PerfilievAlexandr/chat-server/internal/service"
+	"github.com/PerfilievAlexandr/platform_common/pkg/db"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

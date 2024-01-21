@@ -1,10 +1,10 @@
 package message
 
 import (
-	"chat-server/internal/api/grpc/message/mapper"
-	"chat-server/internal/service"
-	proto "chat-server/pkg/chat_v1"
 	"context"
+	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message/mapper"
+	"github.com/PerfilievAlexandr/chat-server/internal/service"
+	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

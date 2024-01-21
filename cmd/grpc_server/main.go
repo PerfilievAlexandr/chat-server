@@ -1,8 +1,8 @@
 package main
 
 import (
-	"chat-server/internal/app"
 	"context"
+	"github.com/PerfilievAlexandr/chat-server/internal/app"
 	"log"
 )
 

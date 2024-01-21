@@ -1,8 +1,8 @@
 package config
 
 import (
-	configInterface "chat-server/internal/config/interface"
 	"fmt"
+	configInterface "github.com/PerfilievAlexandr/chat-server/internal/config/interface"
 	"os"
 
 	"github.com/pkg/errors"

@@ -1,10 +1,10 @@
 package app
 
 import (
-	"chat-server/internal/closer"
-	"chat-server/internal/config"
-	proto "chat-server/pkg/chat_v1"
 	"context"
+	"github.com/PerfilievAlexandr/chat-server/internal/config"
+	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
+	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"

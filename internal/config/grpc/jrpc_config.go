@@ -1,8 +1,8 @@
 package config
 
 import (
-	configInterface "chat-server/internal/config/interface"
 	"errors"
+	configInterface "github.com/PerfilievAlexandr/chat-server/internal/config/interface"
 	"net"
 	"os"
 )
