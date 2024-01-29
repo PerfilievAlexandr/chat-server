@@ -3,6 +3,7 @@ module github.com/PerfilievAlexandr/chat-server
 go 1.22rc1
 
 require (
+	github.com/PerfilievAlexandr/auth v0.0.0-20240129074911-ef9bf03478ea
 	github.com/PerfilievAlexandr/platform_common v1.0.2
 	github.com/joho/godotenv v1.5.1
 	github.com/pkg/errors v0.9.1
@@ -22,7 +23,6 @@ require (
 	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jackc/pgx/v4 v4.18.1 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
-	github.com/stretchr/testify v1.8.3 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.16.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect

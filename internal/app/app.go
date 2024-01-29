@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message/interceptor"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
 	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
 	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
@@ -69,7 +70,10 @@ func (a *App) initProvider(_ context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
-	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+	a.grpcServer = grpc.NewServer(
+		grpc.Creds(insecure.NewCredentials()),
+		grpc.UnaryInterceptor(interceptor.AccessInterceptor),
+	)
 
 	reflection.Register(a.grpcServer)
 
