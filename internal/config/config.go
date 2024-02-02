@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	authClient "github.com/PerfilievAlexandr/chat-server/internal/config/auth_client"
 	dbConfig "github.com/PerfilievAlexandr/chat-server/internal/config/db"
 	grpcConfig "github.com/PerfilievAlexandr/chat-server/internal/config/grpc"
 	configInterface "github.com/PerfilievAlexandr/chat-server/internal/config/interface"
@@ -10,11 +11,12 @@ import (
 )
 
 type Config struct {
-	GRPCConfig configInterface.GrpcServerConfig
-	DbConfig   configInterface.DatabaseConfig
+	GRPCConfig       configInterface.GrpcServerConfig
+	DbConfig         configInterface.DatabaseConfig
+	AuthClientConfig configInterface.GrpcAuthClientConfig
 }
 
-func NewConfig(ctx context.Context) (*Config, error) {
+func NewConfig(_ context.Context) (*Config, error) {
 	dbCfg, err := dbConfig.NewDbConfig()
 	if err != nil {
 		log.Fatalf("failed to config: %s", err.Error())
@@ -23,10 +25,15 @@ func NewConfig(ctx context.Context) (*Config, error) {
 	if err != nil {
 		log.Fatalf("failed to config: %s", err.Error())
 	}
+	authClientCfg, err := authClient.NewAuthClientConfig()
+	if err != nil {
+		log.Fatalf("failed to config: %s", err.Error())
+	}
 
 	return &Config{
-		DbConfig:   dbCfg,
-		GRPCConfig: grpcCfg,
+		DbConfig:         dbCfg,
+		GRPCConfig:       grpcCfg,
+		AuthClientConfig: authClientCfg,
 	}, nil
 }
 

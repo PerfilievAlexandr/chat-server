@@ -2,8 +2,11 @@ package app
 
 import (
 	"context"
+	authProto "github.com/PerfilievAlexandr/auth/pkg/access_v1"
 	api "github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
+	authClient "github.com/PerfilievAlexandr/chat-server/internal/integration/auth"
+	authClientService "github.com/PerfilievAlexandr/chat-server/internal/integration/auth/impl"
 	"github.com/PerfilievAlexandr/chat-server/internal/repository"
 	repo "github.com/PerfilievAlexandr/chat-server/internal/repository/message"
 	"github.com/PerfilievAlexandr/chat-server/internal/service"
@@ -12,6 +15,10 @@ import (
 	"github.com/PerfilievAlexandr/platform_common/pkg/db"
 	"github.com/PerfilievAlexandr/platform_common/pkg/db/pg"
 	"github.com/PerfilievAlexandr/platform_common/pkg/db/transaction"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
+	"github.com/opentracing/opentracing-go"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 )
 
@@ -21,6 +28,7 @@ type diProvider struct {
 	txManager      db.TxManager
 	messageRepo    repository.MessageRepository
 	messageService service.MessageService
+	authClient     authClient.AuthServiceClient
 	messageServer  *api.Server
 }
 
@@ -96,4 +104,21 @@ func (p *diProvider) MessageServer(ctx context.Context) *api.Server {
 	}
 
 	return p.messageServer
+}
+
+func (p *diProvider) AuthClient(ctx context.Context) authClient.AuthServiceClient {
+	if p.authClient == nil {
+		conn, err := grpc.Dial(
+			p.Config(ctx).AuthClientConfig.Address(),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer())),
+		)
+		if err != nil {
+			log.Fatalf("failed to dial GRPC client: %v", err)
+		}
+
+		p.authClient = authClientService.New(authProto.NewAccessV1Client(conn))
+	}
+
+	return p.authClient
 }

@@ -4,10 +4,11 @@ import (
 	"context"
 	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message/interceptor"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
+	"github.com/PerfilievAlexandr/chat-server/internal/tracing"
 	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
 	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
@@ -35,14 +36,15 @@ func (a *App) Run(ctx context.Context) error {
 		closer.Wait()
 	}()
 
-	return a.runGRPCServer(ctx)
+	return a.runGrpcServer(ctx)
 }
 
 func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.initConfig,
+		a.initTrace,
 		a.initProvider,
-		a.initGRPCServer,
+		a.initGrpcServer,
 	}
 
 	for _, f := range inits {
@@ -64,25 +66,28 @@ func (a *App) initConfig(_ context.Context) error {
 	return nil
 }
 
-func (a *App) initProvider(_ context.Context) error {
+func (a *App) initProvider(ctx context.Context) error {
 	a.diProvider = newDiProvider()
+	a.diProvider.AuthClient(ctx)
 	return nil
 }
 
-func (a *App) initGRPCServer(ctx context.Context) error {
+func (a *App) initGrpcServer(ctx context.Context) error {
 	a.grpcServer = grpc.NewServer(
-		grpc.Creds(insecure.NewCredentials()),
-		grpc.UnaryInterceptor(interceptor.AccessInterceptor),
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(
+				interceptor.ServerTracingInterceptor,
+				interceptor.AccessInterceptor(a.diProvider.authClient),
+			),
+		),
 	)
-
 	reflection.Register(a.grpcServer)
-
 	proto.RegisterChatV1Server(a.grpcServer, a.diProvider.MessageServer(ctx))
 
 	return nil
 }
 
-func (a *App) runGRPCServer(ctx context.Context) error {
+func (a *App) runGrpcServer(ctx context.Context) error {
 	log.Printf("GRPC server is running on %s", a.diProvider.Config(ctx).GRPCConfig.Address())
 
 	list, err := net.Listen("tcp", a.diProvider.Config(ctx).GRPCConfig.Address())
@@ -94,6 +99,12 @@ func (a *App) runGRPCServer(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (a *App) initTrace(_ context.Context) error {
+	tracing.Init("chat")
 
 	return nil
 }

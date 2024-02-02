@@ -13,7 +13,7 @@ type Server struct {
 	messageService service.MessageService
 }
 
-func NewServer(ctx context.Context, messageService service.MessageService) *Server {
+func NewServer(_ context.Context, messageService service.MessageService) *Server {
 	return &Server{messageService: messageService}
 }
 
