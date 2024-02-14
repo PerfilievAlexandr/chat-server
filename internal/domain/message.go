@@ -1,9 +1,12 @@
 package domain
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Message struct {
-	Id        int64
+	Id        uuid.UUID
 	Text      string
 	From      string
 	CreatedAt time.Time

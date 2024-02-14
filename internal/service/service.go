@@ -2,12 +2,13 @@ package service
 
 import (
 	"context"
-	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message/dto"
-	"google.golang.org/protobuf/types/known/emptypb"
+	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat/dto"
+	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
+	"github.com/google/uuid"
 )
 
-type MessageService interface {
-	Create(ctx context.Context, usernames []string) (int64, error)
-	Delete(ctx context.Context, messageId int64) (*emptypb.Empty, error)
-	SendMessage(ctx context.Context, req *dto.SendMessageRequest) (*emptypb.Empty, error)
+type ChatService interface {
+	SendMessage(ctx context.Context, req dto.SendMessageRequest) error
+	CreateChat(ctx context.Context, req dto.CreateChatRequest) (uuid.UUID, error)
+	ConnectChat(req dto.ConnectChatRequest, stream proto.ChatV1_ConnectChatServer) error
 }

@@ -2,9 +2,10 @@
 -- +goose StatementBegin
 create table messages
 (
-    id         serial primary key,
+    id         uuid primary key,
     text       text      not null,
-    producer   text      not null,
+    owner      text      not null,
+    chat_id    uuid REFERENCES chat (id),
     created_at timestamp not null default now()
 );
 -- +goose StatementEnd

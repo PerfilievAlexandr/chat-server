@@ -5,6 +5,7 @@ go 1.22rc1
 require (
 	github.com/PerfilievAlexandr/auth v0.0.0-20240129074911-ef9bf03478ea
 	github.com/PerfilievAlexandr/platform_common v1.0.2
+	github.com/google/uuid v1.3.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645
 	github.com/joho/godotenv v1.5.1

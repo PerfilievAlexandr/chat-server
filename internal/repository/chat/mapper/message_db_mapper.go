@@ -13,13 +13,3 @@ func ToMessageFromDbMessage(dbMessage *dtoDb.MessageDb) *domain.Message {
 		CreatedAt: dbMessage.CreatedAt,
 	}
 }
-
-func ToMessagesFromDbMessages(dbMessage []dtoDb.MessageDb) []domain.Message {
-	var messages []domain.Message
-	for _, message := range dbMessage {
-		res := ToMessageFromDbMessage(&message)
-		messages = append(messages, *res)
-	}
-
-	return messages
-}

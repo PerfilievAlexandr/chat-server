@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message/interceptor"
+	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat/interceptor"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
 	"github.com/PerfilievAlexandr/chat-server/internal/tracing"
 	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
@@ -77,12 +77,12 @@ func (a *App) initGrpcServer(ctx context.Context) error {
 		grpc.UnaryInterceptor(
 			grpcMiddleware.ChainUnaryServer(
 				interceptor.ServerTracingInterceptor,
-				interceptor.AccessInterceptor(a.diProvider.authClient),
+				//interceptor.AccessInterceptor(a.diProvider.authClient),
 			),
 		),
 	)
 	reflection.Register(a.grpcServer)
-	proto.RegisterChatV1Server(a.grpcServer, a.diProvider.MessageServer(ctx))
+	proto.RegisterChatV1Server(a.grpcServer, a.diProvider.ChatServer(ctx))
 
 	return nil
 }

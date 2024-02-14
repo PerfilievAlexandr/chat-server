@@ -3,14 +3,15 @@ package app
 import (
 	"context"
 	authProto "github.com/PerfilievAlexandr/auth/pkg/access_v1"
-	api "github.com/PerfilievAlexandr/chat-server/internal/api/grpc/message"
+	api "github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
 	authClient "github.com/PerfilievAlexandr/chat-server/internal/integration/auth"
 	authClientService "github.com/PerfilievAlexandr/chat-server/internal/integration/auth/impl"
 	"github.com/PerfilievAlexandr/chat-server/internal/repository"
-	repo "github.com/PerfilievAlexandr/chat-server/internal/repository/message"
+	chatRepo "github.com/PerfilievAlexandr/chat-server/internal/repository/chat"
+	messageRepo "github.com/PerfilievAlexandr/chat-server/internal/repository/message"
 	"github.com/PerfilievAlexandr/chat-server/internal/service"
-	serviceImpl "github.com/PerfilievAlexandr/chat-server/internal/service/message"
+	chatServiceImpl "github.com/PerfilievAlexandr/chat-server/internal/service/chat"
 	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
 	"github.com/PerfilievAlexandr/platform_common/pkg/db"
 	"github.com/PerfilievAlexandr/platform_common/pkg/db/pg"
@@ -23,13 +24,14 @@ import (
 )
 
 type diProvider struct {
-	config         *config.Config
-	db             db.Client
-	txManager      db.TxManager
-	messageRepo    repository.MessageRepository
-	messageService service.MessageService
-	authClient     authClient.AuthServiceClient
-	messageServer  *api.Server
+	config        *config.Config
+	db            db.Client
+	txManager     db.TxManager
+	messageRepo   repository.MessageRepository
+	chatRepo      repository.ChatRepository
+	chatService   service.ChatService
+	authClient    authClient.AuthServiceClient
+	messageServer *api.Server
 }
 
 func newDiProvider() *diProvider {
@@ -84,23 +86,36 @@ func (p *diProvider) TxManager(ctx context.Context) db.TxManager {
 
 func (p *diProvider) MessageRepository(ctx context.Context) repository.MessageRepository {
 	if p.messageRepo == nil {
-		p.messageRepo = repo.NewMessageRepo(ctx, p.Db(ctx))
+		p.messageRepo = messageRepo.NewMessageRepo(ctx, p.Db(ctx))
 	}
 
 	return p.messageRepo
 }
 
-func (p *diProvider) MessageService(ctx context.Context) service.MessageService {
-	if p.messageService == nil {
-		p.messageService = serviceImpl.NewMessageService(ctx, p.MessageRepository(ctx), p.TxManager(ctx))
+func (p *diProvider) ChatRepository(ctx context.Context) repository.ChatRepository {
+	if p.chatRepo == nil {
+		p.chatRepo = chatRepo.NewChatRepo(ctx, p.Db(ctx))
 	}
 
-	return p.messageRepo
+	return p.chatRepo
 }
 
-func (p *diProvider) MessageServer(ctx context.Context) *api.Server {
+func (p *diProvider) ChatService(ctx context.Context) service.ChatService {
+	if p.chatService == nil {
+		p.chatService = chatServiceImpl.NewChatService(
+			ctx,
+			p.MessageRepository(ctx),
+			p.ChatRepository(ctx),
+			p.TxManager(ctx),
+		)
+	}
+
+	return p.chatService
+}
+
+func (p *diProvider) ChatServer(ctx context.Context) *api.Server {
 	if p.messageServer == nil {
-		p.messageServer = api.NewServer(ctx, p.MessageService(ctx))
+		p.messageServer = api.NewServer(ctx, p.ChatService(ctx))
 	}
 
 	return p.messageServer

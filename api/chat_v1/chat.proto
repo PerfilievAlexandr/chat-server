@@ -4,34 +4,35 @@ package chat_v1;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
-import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/PerfilievAlexandr/internal/api/grpc/chat_v1;chat_v1";
 
 service ChatV1 {
-  rpc Create(CreteRequest) returns (CreateResponse);
-  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+  rpc CreateChat(CreateChatRequest) returns (CreateChatResponse);
+  rpc ConnectChat (ConnectChatRequest) returns (stream Message);
   rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);
 }
 
-message CreteRequest {
-  repeated string usernames = 1;
-}
-
-message CreateResponse {
-  int64 id = 1;
-}
-
-message DeleteRequest {
-  int64 id = 1;
-}
-
-message GetRequest {
-  int64 id = 1;
-}
-
 message SendMessageRequest {
+  string chat_id = 1;
+  Message message = 2;
+}
+
+message Message {
   string from = 1;
   string text = 2;
   google.protobuf.Timestamp timestamp = 3;
+}
+
+message ConnectChatRequest {
+  string chat_id = 1;
+  string username = 2;
+}
+
+message CreateChatRequest {
+  string username = 1;
+}
+
+message CreateChatResponse {
+  string chat_id = 1;
 }
