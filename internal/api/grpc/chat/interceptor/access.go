@@ -3,7 +3,6 @@ package interceptor
 import (
 	"context"
 	"errors"
-	authProto "github.com/PerfilievAlexandr/auth/pkg/access_v1"
 	authClient "github.com/PerfilievAlexandr/chat-server/internal/integration/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -17,7 +16,7 @@ func AccessInterceptor(authClient authClient.AuthServiceClient) grpc.UnaryServer
 		}
 		outgoingContext := metadata.NewOutgoingContext(ctx, md)
 
-		_, err := authClient.Check(outgoingContext, &authProto.CheckRequest{EndpointAddress: ""})
+		_, err := authClient.Check(outgoingContext)
 		if err != nil {
 			return nil, err
 		}

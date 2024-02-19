@@ -2,10 +2,9 @@ package authClient
 
 import (
 	"context"
-	authProto "github.com/PerfilievAlexandr/auth/pkg/access_v1"
-	"google.golang.org/protobuf/types/known/emptypb"
+	"github.com/PerfilievAlexandr/chat-server/internal/integration/auth/dto"
 )
 
 type AuthServiceClient interface {
-	Check(ctx context.Context, req *authProto.CheckRequest) (*emptypb.Empty, error)
+	Check(ctx context.Context) (dto.ClaimsResponse, error)
 }

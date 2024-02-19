@@ -4,6 +4,8 @@ import (
 	"context"
 	authProto "github.com/PerfilievAlexandr/auth/pkg/access_v1"
 	authClient "github.com/PerfilievAlexandr/chat-server/internal/integration/auth"
+	"github.com/PerfilievAlexandr/chat-server/internal/integration/auth/dto"
+	"github.com/PerfilievAlexandr/chat-server/internal/integration/auth/mapper"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -15,6 +17,11 @@ func New(authClient authProto.AccessV1Client) authClient.AuthServiceClient {
 	return &client{authClient: authClient}
 }
 
-func (c *client) Check(ctx context.Context, req *authProto.CheckRequest) (*emptypb.Empty, error) {
-	return c.authClient.Check(ctx, &authProto.CheckRequest{EndpointAddress: req.EndpointAddress})
+func (c *client) Check(ctx context.Context) (dto.ClaimsResponse, error) {
+	claims, err := c.authClient.Check(ctx, &emptypb.Empty{})
+	if err != nil {
+		return dto.ClaimsResponse{}, err
+	}
+
+	return mapper.MapToClaimsResponse(claims), nil
 }

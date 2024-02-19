@@ -12,3 +12,7 @@ type ChatService interface {
 	CreateChat(ctx context.Context, req dto.CreateChatRequest) (uuid.UUID, error)
 	ConnectChat(req dto.ConnectChatRequest, stream proto.ChatV1_ConnectChatServer) error
 }
+
+type CheckRoleService interface {
+	CheckAdmin(ctx context.Context, role string) error
+}

@@ -12,6 +12,7 @@ import (
 	messageRepo "github.com/PerfilievAlexandr/chat-server/internal/repository/message"
 	"github.com/PerfilievAlexandr/chat-server/internal/service"
 	chatServiceImpl "github.com/PerfilievAlexandr/chat-server/internal/service/chat"
+	checkRoleServiceImpl "github.com/PerfilievAlexandr/chat-server/internal/service/check_role"
 	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
 	"github.com/PerfilievAlexandr/platform_common/pkg/db"
 	"github.com/PerfilievAlexandr/platform_common/pkg/db/pg"
@@ -24,14 +25,15 @@ import (
 )
 
 type diProvider struct {
-	config        *config.Config
-	db            db.Client
-	txManager     db.TxManager
-	messageRepo   repository.MessageRepository
-	chatRepo      repository.ChatRepository
-	chatService   service.ChatService
-	authClient    authClient.AuthServiceClient
-	messageServer *api.Server
+	config           *config.Config
+	db               db.Client
+	txManager        db.TxManager
+	messageRepo      repository.MessageRepository
+	chatRepo         repository.ChatRepository
+	chatService      service.ChatService
+	checkRoleService service.CheckRoleService
+	authClient       authClient.AuthServiceClient
+	messageServer    *api.Server
 }
 
 func newDiProvider() *diProvider {
@@ -113,9 +115,22 @@ func (p *diProvider) ChatService(ctx context.Context) service.ChatService {
 	return p.chatService
 }
 
+func (p *diProvider) CheckRoleService(ctx context.Context) service.CheckRoleService {
+	if p.checkRoleService == nil {
+		p.checkRoleService = checkRoleServiceImpl.NewCheckRoleService(ctx)
+	}
+
+	return p.checkRoleService
+}
+
 func (p *diProvider) ChatServer(ctx context.Context) *api.Server {
 	if p.messageServer == nil {
-		p.messageServer = api.NewServer(ctx, p.ChatService(ctx))
+		p.messageServer = api.NewServer(
+			ctx,
+			p.ChatService(ctx),
+			p.CheckRoleService(ctx),
+			p.AuthClient(ctx),
+		)
 	}
 
 	return p.messageServer

@@ -3,7 +3,7 @@ module github.com/PerfilievAlexandr/chat-server
 go 1.22rc1
 
 require (
-	github.com/PerfilievAlexandr/auth v0.0.0-20240129074911-ef9bf03478ea
+	github.com/PerfilievAlexandr/auth v1.0.1
 	github.com/PerfilievAlexandr/platform_common v1.0.2
 	github.com/google/uuid v1.3.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
@@ -36,4 +36,5 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97 // indirect
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0 // indirect
 )
