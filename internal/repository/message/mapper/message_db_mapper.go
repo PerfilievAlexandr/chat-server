@@ -5,8 +5,8 @@ import (
 	"github.com/PerfilievAlexandr/chat-server/internal/repository/message/dtoDb"
 )
 
-func ToMessageFromDbMessage(dbMessage *dtoDb.MessageDb) *domain.Message {
-	return &domain.Message{
+func ToMessageFromDbMessage(dbMessage dtoDb.MessageDb) domain.Message {
+	return domain.Message{
 		Id:        dbMessage.Id,
 		Text:      dbMessage.Text,
 		From:      dbMessage.From,
@@ -17,8 +17,8 @@ func ToMessageFromDbMessage(dbMessage *dtoDb.MessageDb) *domain.Message {
 func ToMessagesFromDbMessages(dbMessage []dtoDb.MessageDb) []domain.Message {
 	var messages []domain.Message
 	for _, message := range dbMessage {
-		res := ToMessageFromDbMessage(&message)
-		messages = append(messages, *res)
+		res := ToMessageFromDbMessage(message)
+		messages = append(messages, res)
 	}
 
 	return messages

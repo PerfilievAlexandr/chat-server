@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func MapToProtoMessage(message *domain.Message) *proto.Message {
+func MapToProtoMessage(message domain.Message) *proto.Message {
 	return &proto.Message{
 		From:      message.From,
 		Text:      message.Text,

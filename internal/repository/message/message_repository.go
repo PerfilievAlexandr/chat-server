@@ -23,25 +23,20 @@ func NewMessageRepo(_ context.Context, db db.Client) repository.MessageRepositor
 	return &messageRepository{db: db}
 }
 
-func (m *messageRepository) Create(ctx context.Context, usernames []string) (int64, error) {
-	// TODO
-	return 1, nil
-}
-
-func (m *messageRepository) Delete(ctx context.Context, messageId int64) (*emptypb.Empty, error) {
+func (m *messageRepository) Delete(ctx context.Context, messageId int64) (emptypb.Empty, error) {
 	query := fmt.Sprintf("DELETE FROM messages WHERE id=$1")
 	_, err := m.db.ExecContext(ctx, query, messageId)
 	if err != nil {
-		return nil, err
+		return emptypb.Empty{}, err
 	}
 
-	return &emptypb.Empty{}, nil
+	return emptypb.Empty{}, nil
 }
 
-func (m *messageRepository) SaveMessage(ctx context.Context, req *dto.SendMessageRequest) (*domain.Message, error) {
+func (m *messageRepository) SaveMessage(ctx context.Context, req dto.SendMessageRequest) (domain.Message, error) {
 	id, idErr := uuid.NewUUID()
 	if idErr != nil {
-		return nil, idErr
+		return domain.Message{}, idErr
 	}
 
 	query := fmt.Sprintf("INSERT INTO messages (id, text, owner, chat_id, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, text, owner, chat_id, created_at")
@@ -49,10 +44,10 @@ func (m *messageRepository) SaveMessage(ctx context.Context, req *dto.SendMessag
 	var message = dtoDb.MessageDb{}
 	err := m.db.ScanOneContext(ctx, &message, query, id, req.Text, req.Owner, uuid.MustParse(req.ChatId), time.Now())
 	if err != nil {
-		return nil, err
+		return domain.Message{}, err
 	}
 
-	return mapper.ToMessageFromDbMessage(&message), nil
+	return mapper.ToMessageFromDbMessage(message), nil
 }
 
 func (m *messageRepository) GetMessagesByChatId(ctx context.Context, chatId uuid.UUID) ([]domain.Message, error) {

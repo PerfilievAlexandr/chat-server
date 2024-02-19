@@ -19,19 +19,19 @@ func NewChatRepo(_ context.Context, db db.Client) repository.ChatRepository {
 	return &chatRepository{db}
 }
 
-func (c *chatRepository) SaveChat(ctx context.Context, req dto.CreateChatRequest) (*uuid.UUID, error) {
+func (c *chatRepository) SaveChat(ctx context.Context, req dto.CreateChatRequest) (uuid.UUID, error) {
 	id, idErr := uuid.NewUUID()
 	if idErr != nil {
-		return nil, idErr
+		return uuid.UUID{}, idErr
 	}
 	query := fmt.Sprintf("INSERT INTO chat (id, owner, created_at) VALUES ($1, $2, $3)")
 
 	_, err := c.db.ExecContext(ctx, query, id, req.Username, time.Now())
 	if err != nil {
-		return nil, err
+		return uuid.UUID{}, err
 	}
 
-	return &id, nil
+	return id, nil
 }
 
 func (c *chatRepository) IsExists(ctx context.Context, chatId uuid.UUID) (bool, error) {
