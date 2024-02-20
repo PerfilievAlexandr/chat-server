@@ -4,13 +4,14 @@ import (
 	"context"
 	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat/interceptor"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
+	"github.com/PerfilievAlexandr/chat-server/internal/logger"
 	"github.com/PerfilievAlexandr/chat-server/internal/tracing"
 	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
 	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"log"
 	"net"
 )
 
@@ -88,7 +89,7 @@ func (a *App) initGrpcServer(ctx context.Context) error {
 }
 
 func (a *App) runGrpcServer(ctx context.Context) error {
-	log.Printf("GRPC server is running on %s", a.diProvider.Config(ctx).GRPCConfig.Address())
+	logger.Info("GRPC server is running on:", zap.String("host:port", a.diProvider.config.GRPCConfig.Address()))
 
 	list, err := net.Listen("tcp", a.diProvider.Config(ctx).GRPCConfig.Address())
 	if err != nil {

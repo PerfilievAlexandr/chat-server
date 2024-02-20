@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"github.com/PerfilievAlexandr/chat-server/internal/app"
-	"log"
+	"github.com/PerfilievAlexandr/chat-server/internal/logger"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -11,11 +12,11 @@ func main() {
 
 	a, err := app.NewApp(ctx)
 	if err != nil {
-		log.Fatalf("failed to init app: %s", err.Error())
+		logger.Fatal("failed to init app", zap.Any("err", err))
 	}
 
 	err = a.Run(ctx)
 	if err != nil {
-		log.Fatalf("failed to run app: %s", err.Error())
+		logger.Fatal("failed to run app", zap.Any("err", err))
 	}
 }

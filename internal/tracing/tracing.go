@@ -1,8 +1,8 @@
 package tracing
 
 import (
+	"github.com/PerfilievAlexandr/chat-server/internal/logger"
 	"github.com/uber/jaeger-client-go/config"
-	"log"
 )
 
 func Init(serviceName string) {
@@ -15,6 +15,6 @@ func Init(serviceName string) {
 
 	_, err := cfg.InitGlobalTracer(serviceName)
 	if err != nil {
-		log.Fatal("failed to init tracing")
+		logger.Fatal("failed to init tracing")
 	}
 }

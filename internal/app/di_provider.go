@@ -7,6 +7,7 @@ import (
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
 	authClient "github.com/PerfilievAlexandr/chat-server/internal/integration/auth"
 	authClientService "github.com/PerfilievAlexandr/chat-server/internal/integration/auth/impl"
+	"github.com/PerfilievAlexandr/chat-server/internal/logger"
 	"github.com/PerfilievAlexandr/chat-server/internal/repository"
 	chatRepo "github.com/PerfilievAlexandr/chat-server/internal/repository/chat"
 	messageRepo "github.com/PerfilievAlexandr/chat-server/internal/repository/message"
@@ -19,9 +20,9 @@ import (
 	"github.com/PerfilievAlexandr/platform_common/pkg/db/transaction"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"log"
 )
 
 type diProvider struct {
@@ -45,7 +46,7 @@ func (p *diProvider) Config(ctx context.Context) *config.Config {
 		cfg, err := config.NewConfig(ctx)
 		if err != nil {
 			if err != nil {
-				log.Fatalf("failed to get pg config: %s", err.Error())
+				logger.Fatal("failed to get pg config", zap.Any("err", err))
 			}
 		}
 
@@ -59,12 +60,12 @@ func (p *diProvider) Db(ctx context.Context) db.Client {
 	if p.db == nil {
 		dbPool, err := pg.New(ctx, p.Config(ctx).DbConfig.ConnectString())
 		if err != nil {
-			log.Fatalf("failed to connect to database: %v", err)
+			logger.Fatal("failed to connect to database", zap.Any("err", err))
 		}
 
 		err = dbPool.Ping(ctx)
 		if err != nil {
-			log.Fatalf("failed to connect to database: %v", err)
+			logger.Fatal("failed to ping database", zap.Any("err", err))
 		}
 
 		closer.Add(func() error {
@@ -144,7 +145,7 @@ func (p *diProvider) AuthClient(ctx context.Context) authClient.AuthServiceClien
 			grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer())),
 		)
 		if err != nil {
-			log.Fatalf("failed to dial GRPC client: %v", err)
+			logger.Fatal("failed to dial GRPC client:", zap.Any("err", err))
 		}
 
 		p.authClient = authClientService.New(authProto.NewAccessV1Client(conn))
