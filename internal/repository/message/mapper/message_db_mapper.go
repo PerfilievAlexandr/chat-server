@@ -10,6 +10,7 @@ func ToMessageFromDbMessage(dbMessage dtoDb.MessageDb) domain.Message {
 		Id:        dbMessage.Id,
 		Text:      dbMessage.Text,
 		From:      dbMessage.From,
+		Status:    dbMessage.Status,
 		CreatedAt: dbMessage.CreatedAt,
 	}
 }

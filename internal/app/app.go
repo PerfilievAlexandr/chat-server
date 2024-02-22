@@ -10,9 +10,11 @@ import (
 	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
+	"os"
 )
 
 type App struct {
@@ -46,6 +48,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initTrace,
 		a.initProvider,
 		a.initGrpcServer,
+		a.initLogger,
 	}
 
 	for _, f := range inits {
@@ -88,6 +91,17 @@ func (a *App) initGrpcServer(ctx context.Context) error {
 	return nil
 }
 
+func (a *App) initLogger(_ context.Context) error {
+	stdout := zapcore.AddSync(os.Stdout)
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+	core := zapcore.NewCore(consoleEncoder, stdout, zap.InfoLevel)
+	logger.Init(core)
+
+	return nil
+}
+
 func (a *App) runGrpcServer(ctx context.Context) error {
 	logger.Info("GRPC server is running on:", zap.String("host:port", a.diProvider.config.GRPCConfig.Address()))
 
@@ -105,7 +119,7 @@ func (a *App) runGrpcServer(ctx context.Context) error {
 }
 
 func (a *App) initTrace(_ context.Context) error {
-	tracing.Init("chat")
+	tracing.Init(logger.Logger(), "chat")
 
 	return nil
 }

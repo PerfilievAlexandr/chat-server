@@ -1,11 +1,11 @@
 package tracing
 
 import (
-	"github.com/PerfilievAlexandr/chat-server/internal/logger"
 	"github.com/uber/jaeger-client-go/config"
+	"go.uber.org/zap"
 )
 
-func Init(serviceName string) {
+func Init(logger *zap.Logger, serviceName string) {
 	cfg := config.Configuration{
 		Sampler: &config.SamplerConfig{
 			Type:  "const",
@@ -15,6 +15,8 @@ func Init(serviceName string) {
 
 	_, err := cfg.InitGlobalTracer(serviceName)
 	if err != nil {
-		logger.Fatal("failed to init tracing")
+		if err != nil {
+			logger.Fatal("failed to init tracing", zap.Error(err))
+		}
 	}
 }

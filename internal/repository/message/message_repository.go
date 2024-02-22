@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat/dto"
 	"github.com/PerfilievAlexandr/chat-server/internal/domain"
+	messageStatus "github.com/PerfilievAlexandr/chat-server/internal/domain/enum"
 	"github.com/PerfilievAlexandr/chat-server/internal/repository/message/dtoDb"
 	"github.com/PerfilievAlexandr/chat-server/internal/repository/message/mapper"
 	"github.com/google/uuid"
@@ -39,10 +40,10 @@ func (m *messageRepository) SaveMessage(ctx context.Context, req dto.SendMessage
 		return domain.Message{}, idErr
 	}
 
-	query := fmt.Sprintf("INSERT INTO messages (id, text, owner, chat_id, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, text, owner, chat_id, created_at")
+	query := fmt.Sprintf("INSERT INTO messages (id, text, owner, status, chat_id, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, text, owner, chat_id, created_at")
 
 	var message = dtoDb.MessageDb{}
-	err := m.db.ScanOneContext(ctx, &message, query, id, req.Text, req.Owner, uuid.MustParse(req.ChatId), time.Now())
+	err := m.db.ScanOneContext(ctx, &message, query, id, req.Text, req.Owner, messageStatus.NEW, uuid.MustParse(req.ChatId), time.Now())
 	if err != nil {
 		return domain.Message{}, err
 	}

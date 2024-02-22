@@ -3,10 +3,11 @@
 create table messages
 (
     id         uuid primary key,
-    text       text      not null,
-    owner      text      not null,
+    text       text         not null,
+    owner      text         not null,
+    status     varchar(256) not null,
     chat_id    uuid REFERENCES chat (id),
-    created_at timestamp not null default now()
+    created_at timestamp    not null default now()
 );
 -- +goose StatementEnd
 
