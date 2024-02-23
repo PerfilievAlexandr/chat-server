@@ -8,7 +8,6 @@ import (
 	"github.com/PerfilievAlexandr/chat-server/internal/repository"
 	"github.com/PerfilievAlexandr/chat-server/internal/service"
 	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
-	"github.com/PerfilievAlexandr/platform_common/pkg/db"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,23 +26,20 @@ type chatService struct {
 	channels  map[string]chan domain.Message
 	mxChannel sync.RWMutex
 
-	messageRepository repository.MessageRepository
-	chatRepository    repository.ChatRepository
-	tx                db.TxManager
+	messageService service.MessageService
+	chatRepository repository.ChatRepository
 }
 
 func NewChatService(
 	_ context.Context,
-	messageRepo repository.MessageRepository,
+	messageService service.MessageService,
 	chatRepo repository.ChatRepository,
-	tx db.TxManager,
 ) service.ChatService {
 	return &chatService{
-		chats:             make(map[string]*chat),
-		channels:          make(map[string]chan domain.Message),
-		messageRepository: messageRepo,
-		chatRepository:    chatRepo,
-		tx:                tx,
+		chats:          make(map[string]*chat),
+		channels:       make(map[string]chan domain.Message),
+		messageService: messageService,
+		chatRepository: chatRepo,
 	}
 }
 
@@ -107,10 +103,11 @@ func (c *chatService) createChannelIfNotExist(ctx context.Context, chatId string
 }
 
 func (c *chatService) fillChanelFromDb(ctx context.Context, chatId string, chanel chan domain.Message) error {
-	messages, err := c.messageRepository.GetMessagesByChatId(ctx, uuid.MustParse(chatId))
+	messages, err := c.messageService.GetMessagesByChatId(ctx, chatId)
 	if err != nil {
-		return status.Errorf(codes.Internal, "load messages error")
+		return err
 	}
+
 	for _, message := range messages {
 		chanel <- message
 	}
@@ -153,11 +150,12 @@ func (c *chatService) SendMessage(ctx context.Context, message dto.SendMessageRe
 		return status.Errorf(codes.NotFound, "chat not found")
 	}
 
-	saveMessage, err := c.messageRepository.SaveMessage(ctx, message)
+	saveMessage, err := c.messageService.SaveMessage(ctx, message)
 	if err != nil {
-		return status.Errorf(codes.Internal, "error save message")
+		return err
 	}
 
 	chanel <- saveMessage
+
 	return nil
 }

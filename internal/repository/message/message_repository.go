@@ -40,7 +40,7 @@ func (m *messageRepository) SaveMessage(ctx context.Context, req dto.SendMessage
 		return domain.Message{}, idErr
 	}
 
-	query := fmt.Sprintf("INSERT INTO messages (id, text, owner, status, chat_id, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, text, owner, chat_id, created_at")
+	query := fmt.Sprintf("INSERT INTO messages (id, text, owner, status, chat_id, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, text, owner, status, chat_id, created_at")
 
 	var message = dtoDb.MessageDb{}
 	err := m.db.ScanOneContext(ctx, &message, query, id, req.Text, req.Owner, messageStatus.NEW, uuid.MustParse(req.ChatId), time.Now())

@@ -18,3 +18,7 @@ type ChatRepository interface {
 	SaveChat(ctx context.Context, req dto.CreateChatRequest) (uuid.UUID, error)
 	IsExists(ctx context.Context, chatId uuid.UUID) (bool, error)
 }
+
+type HistoryRepository interface {
+	SaveHistory(ctx context.Context, req domain.Message) error
+}

@@ -10,10 +10,13 @@ import (
 	"github.com/PerfilievAlexandr/chat-server/internal/logger"
 	"github.com/PerfilievAlexandr/chat-server/internal/repository"
 	chatRepo "github.com/PerfilievAlexandr/chat-server/internal/repository/chat"
+	historyRepository "github.com/PerfilievAlexandr/chat-server/internal/repository/history"
 	messageRepo "github.com/PerfilievAlexandr/chat-server/internal/repository/message"
 	"github.com/PerfilievAlexandr/chat-server/internal/service"
 	chatServiceImpl "github.com/PerfilievAlexandr/chat-server/internal/service/chat"
 	checkRoleServiceImpl "github.com/PerfilievAlexandr/chat-server/internal/service/check_role"
+	serviceHistory "github.com/PerfilievAlexandr/chat-server/internal/service/history"
+	serviceMessage "github.com/PerfilievAlexandr/chat-server/internal/service/message"
 	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
 	"github.com/PerfilievAlexandr/platform_common/pkg/db"
 	"github.com/PerfilievAlexandr/platform_common/pkg/db/pg"
@@ -30,8 +33,11 @@ type diProvider struct {
 	db               db.Client
 	txManager        db.TxManager
 	messageRepo      repository.MessageRepository
+	historyRepo      repository.HistoryRepository
 	chatRepo         repository.ChatRepository
 	chatService      service.ChatService
+	messageService   service.MessageService
+	historyService   service.HistoryService
 	checkRoleService service.CheckRoleService
 	authClient       authClient.AuthServiceClient
 	messageServer    *api.Server
@@ -95,6 +101,14 @@ func (p *diProvider) MessageRepository(ctx context.Context) repository.MessageRe
 	return p.messageRepo
 }
 
+func (p *diProvider) HistoryRepository(ctx context.Context) repository.HistoryRepository {
+	if p.historyRepo == nil {
+		p.historyRepo = historyRepository.NewHistoryRepo(ctx, p.Db(ctx))
+	}
+
+	return p.historyRepo
+}
+
 func (p *diProvider) ChatRepository(ctx context.Context) repository.ChatRepository {
 	if p.chatRepo == nil {
 		p.chatRepo = chatRepo.NewChatRepo(ctx, p.Db(ctx))
@@ -107,13 +121,36 @@ func (p *diProvider) ChatService(ctx context.Context) service.ChatService {
 	if p.chatService == nil {
 		p.chatService = chatServiceImpl.NewChatService(
 			ctx,
-			p.MessageRepository(ctx),
+			p.MessageService(ctx),
 			p.ChatRepository(ctx),
-			p.TxManager(ctx),
 		)
 	}
 
 	return p.chatService
+}
+
+func (p *diProvider) MessageService(ctx context.Context) service.MessageService {
+	if p.messageService == nil {
+		p.messageService = serviceMessage.NewMessageService(
+			ctx,
+			p.MessageRepository(ctx),
+			p.HistoryService(ctx),
+			p.TxManager(ctx),
+		)
+	}
+
+	return p.messageService
+}
+
+func (p *diProvider) HistoryService(ctx context.Context) service.HistoryService {
+	if p.historyService == nil {
+		p.historyService = serviceHistory.NewHistoryService(
+			ctx,
+			p.HistoryRepository(ctx),
+		)
+	}
+
+	return p.historyService
 }
 
 func (p *diProvider) CheckRoleService(ctx context.Context) service.CheckRoleService {
