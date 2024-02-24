@@ -5,21 +5,26 @@ import (
 	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat/interceptor"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
 	"github.com/PerfilievAlexandr/chat-server/internal/logger"
+	prometheusMetrics "github.com/PerfilievAlexandr/chat-server/internal/metrics"
 	"github.com/PerfilievAlexandr/chat-server/internal/tracing"
 	proto "github.com/PerfilievAlexandr/chat-server/pkg/chat_v1"
 	"github.com/PerfilievAlexandr/platform_common/pkg/closer"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
+	"net/http"
 	"os"
+	"sync"
 )
 
 type App struct {
 	diProvider *diProvider
 	grpcServer *grpc.Server
+	prometheus *http.Server
 }
 
 func NewApp(ctx context.Context) (*App, error) {
@@ -39,16 +44,40 @@ func (a *App) Run(ctx context.Context) error {
 		closer.Wait()
 	}()
 
-	return a.runGrpcServer(ctx)
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+
+		err := a.runGrpcServer(ctx)
+		if err != nil {
+			logger.Fatal("failed to run GRPC grpcAuthServer", zap.Any("err", err))
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		err := a.runPrometheus(ctx)
+		if err != nil {
+			logger.Fatal("failed to run prometheusServer", zap.Any("err", err))
+		}
+	}()
+
+	wg.Wait()
+
+	return nil
 }
 
 func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.initConfig,
-		a.initTrace,
 		a.initProvider,
-		a.initGrpcServer,
 		a.initLogger,
+		a.initPrometheus,
+		a.initTrace,
+		a.initGrpcServer,
 	}
 
 	for _, f := range inits {
@@ -82,6 +111,8 @@ func (a *App) initGrpcServer(ctx context.Context) error {
 			grpcMiddleware.ChainUnaryServer(
 				interceptor.ServerTracingInterceptor,
 				//interceptor.AccessInterceptor(a.diProvider.authClient),
+				interceptor.LogInterceptor,
+				interceptor.MetricsInterceptor,
 			),
 		),
 	)
@@ -111,6 +142,29 @@ func (a *App) runGrpcServer(ctx context.Context) error {
 	}
 
 	err = a.grpcServer.Serve(list)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *App) initPrometheus(ctx context.Context) error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	a.prometheus = &http.Server{
+		Addr:    a.diProvider.Config(ctx).PrometheusConfig.Address(),
+		Handler: mux,
+	}
+
+	return prometheusMetrics.Init(ctx)
+}
+
+func (a *App) runPrometheus(_ context.Context) error {
+	logger.Info("Prometheus server is running on:", zap.String("host:port", a.diProvider.config.PrometheusConfig.Address()))
+
+	err := a.prometheus.ListenAndServe()
 	if err != nil {
 		return err
 	}

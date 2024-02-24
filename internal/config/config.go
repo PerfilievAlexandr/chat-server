@@ -6,6 +6,7 @@ import (
 	dbConfig "github.com/PerfilievAlexandr/chat-server/internal/config/db"
 	grpcConfig "github.com/PerfilievAlexandr/chat-server/internal/config/grpc"
 	configInterface "github.com/PerfilievAlexandr/chat-server/internal/config/interface"
+	pometheusConfig "github.com/PerfilievAlexandr/chat-server/internal/config/prometheus"
 	"github.com/PerfilievAlexandr/chat-server/internal/logger"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -15,6 +16,7 @@ type Config struct {
 	GRPCConfig       configInterface.GrpcServerConfig
 	DbConfig         configInterface.DatabaseConfig
 	AuthClientConfig configInterface.GrpcAuthClientConfig
+	PrometheusConfig configInterface.PrometheusServerConfig
 }
 
 func NewConfig(_ context.Context) (*Config, error) {
@@ -30,11 +32,16 @@ func NewConfig(_ context.Context) (*Config, error) {
 	if err != nil {
 		logger.Fatal("failed to config", zap.Any("err", err))
 	}
+	prometheusCfg, err := pometheusConfig.NewPrometheusConfig()
+	if err != nil {
+		logger.Fatal("failed to config", zap.Any("err", err))
+	}
 
 	return &Config{
 		DbConfig:         dbCfg,
 		GRPCConfig:       grpcCfg,
 		AuthClientConfig: authClientCfg,
+		PrometheusConfig: prometheusCfg,
 	}, nil
 }
 
