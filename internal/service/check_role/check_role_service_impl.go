@@ -1,4 +1,4 @@
-package checkRole
+package checkRoleService
 
 import (
 	"context"

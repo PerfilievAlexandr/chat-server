@@ -46,7 +46,7 @@ func NewChatService(
 func (c *chatService) CreateChat(ctx context.Context, req dto.CreateChatRequest) (uuid.UUID, error) {
 	chatId, err := c.chatRepository.SaveChat(ctx, req)
 	if err != nil {
-		return uuid.UUID{}, err
+		return uuid.UUID{}, status.Errorf(codes.Internal, "error create chat")
 	}
 
 	c.channels[chatId.String()] = make(chan domain.Message, 100)

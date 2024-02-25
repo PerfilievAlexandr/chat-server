@@ -31,6 +31,7 @@ func NewMessageService(
 	}
 }
 
+// TODO как протестировать метод? Как записать message?
 func (m *messageService) SaveMessage(ctx context.Context, req dto.SendMessageRequest) (domain.Message, error) {
 	var message domain.Message
 
