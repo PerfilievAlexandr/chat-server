@@ -1,4 +1,4 @@
-package tests
+package chat
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"github.com/PerfilievAlexandr/chat-server/internal/repository"
 	"github.com/PerfilievAlexandr/chat-server/internal/repository/mocks"
 	"github.com/PerfilievAlexandr/chat-server/internal/service"
-	serviceChat "github.com/PerfilievAlexandr/chat-server/internal/service/chat"
 	"github.com/gojuno/minimock/v3"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -15,7 +14,7 @@ import (
 	"testing"
 )
 
-func TestCreateChat(t *testing.T) {
+func TestConnectChat(t *testing.T) {
 	t.Parallel()
 	type messageServiceMockFunc func(mc *minimock.Controller) service.MessageService
 	type chatRepositoryMockFunc func(mc *minimock.Controller) repository.ChatRepository
@@ -41,12 +40,13 @@ func TestCreateChat(t *testing.T) {
 	t.Cleanup(mc.Finish)
 
 	tests := []struct {
-		name                   string
-		args                   args
-		result                 uuid.UUID
-		err                    error
-		chatRepositoryMockFunc chatRepositoryMockFunc
-		messageServiceMockFunc messageServiceMockFunc
+		name                       string
+		args                       args
+		result                     uuid.UUID
+		err                        error
+		isChannelWithChatIdCreated bool
+		chatRepositoryMockFunc     chatRepositoryMockFunc
+		messageServiceMockFunc     messageServiceMockFunc
 	}{
 		{
 			name: "success case",
@@ -54,8 +54,9 @@ func TestCreateChat(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			err:    nil,
-			result: result,
+			err:                        nil,
+			result:                     result,
+			isChannelWithChatIdCreated: true,
 			chatRepositoryMockFunc: func(mc *minimock.Controller) repository.ChatRepository {
 				mock := mocks.NewChatRepositoryMock(mc)
 				mock.SaveChatMock.Expect(ctx, req).Return(result, nil)
@@ -69,8 +70,9 @@ func TestCreateChat(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			err:    createChatErr,
-			result: uuid.UUID{},
+			err:                        createChatErr,
+			result:                     uuid.UUID{},
+			isChannelWithChatIdCreated: false,
 			chatRepositoryMockFunc: func(mc *minimock.Controller) repository.ChatRepository {
 				mock := mocks.NewChatRepositoryMock(mc)
 				mock.SaveChatMock.Expect(ctx, req).Return(uuid.UUID{}, createChatErr)
@@ -87,10 +89,13 @@ func TestCreateChat(t *testing.T) {
 
 			messageServiceMock := tt.messageServiceMockFunc(mc)
 			chatRepositoryMock := tt.chatRepositoryMockFunc(mc)
-			serviceChatTest := serviceChat.NewChatService(ctx, messageServiceMock, chatRepositoryMock)
+			serviceChatTest := NewChatService(ctx, messageServiceMock, chatRepositoryMock).(*chatService)
 
 			res, err := serviceChatTest.CreateChat(tt.args.ctx, tt.args.req)
+			_, ok := serviceChatTest.channels[res.String()]
+
 			require.Equal(t, tt.err, err)
+			require.Equal(t, tt.isChannelWithChatIdCreated, ok)
 			require.Equal(t, tt.result, res)
 		})
 	}
