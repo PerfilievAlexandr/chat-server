@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat/dto"
 	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat/mapper"
+	kafkaProducer "github.com/PerfilievAlexandr/chat-server/internal/api/kafka/producer"
 	"github.com/PerfilievAlexandr/chat-server/internal/domain"
 	"github.com/PerfilievAlexandr/chat-server/internal/repository"
 	"github.com/PerfilievAlexandr/chat-server/internal/service"
@@ -28,18 +29,21 @@ type chatService struct {
 
 	messageService service.MessageService
 	chatRepository repository.ChatRepository
+	kafkaProducer  *kafkaProducer.KafkaProducer
 }
 
 func NewChatService(
 	_ context.Context,
 	messageService service.MessageService,
 	chatRepo repository.ChatRepository,
+	kafkaProducer *kafkaProducer.KafkaProducer,
 ) service.ChatService {
 	return &chatService{
 		chats:          make(map[string]*chat),
 		channels:       make(map[string]chan domain.Message),
 		messageService: messageService,
 		chatRepository: chatRepo,
+		kafkaProducer:  kafkaProducer,
 	}
 }
 
@@ -47,6 +51,11 @@ func (c *chatService) CreateChat(ctx context.Context, req dto.CreateChatRequest)
 	chatId, err := c.chatRepository.SaveChat(ctx, req)
 	if err != nil {
 		return uuid.UUID{}, status.Errorf(codes.Internal, "error create chat")
+	}
+
+	err = c.kafkaProducer.SendCreateChatMessage(ctx, chatId)
+	if err != nil {
+		return uuid.UUID{}, status.Errorf(codes.Internal, "error send to kafka create chat event")
 	}
 
 	c.channels[chatId.String()] = make(chan domain.Message, 100)

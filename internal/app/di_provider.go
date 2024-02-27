@@ -4,6 +4,7 @@ import (
 	"context"
 	authProto "github.com/PerfilievAlexandr/auth/pkg/access_v1"
 	api "github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat"
+	kafkaProducer "github.com/PerfilievAlexandr/chat-server/internal/api/kafka/producer"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
 	authClient "github.com/PerfilievAlexandr/chat-server/internal/integration/auth"
 	authClientService "github.com/PerfilievAlexandr/chat-server/internal/integration/auth/impl"
@@ -41,6 +42,7 @@ type diProvider struct {
 	checkRoleService service.CheckRoleService
 	authClient       authClient.AuthServiceClient
 	messageServer    *api.Server
+	kafkaProducer    *kafkaProducer.KafkaProducer
 }
 
 func newDiProvider() *diProvider {
@@ -51,9 +53,7 @@ func (p *diProvider) Config(ctx context.Context) *config.Config {
 	if p.config == nil {
 		cfg, err := config.NewConfig(ctx)
 		if err != nil {
-			if err != nil {
-				logger.Fatal("failed to get pg config", zap.Any("err", err))
-			}
+			logger.Fatal("failed to get pg config", zap.Any("err", err))
 		}
 
 		p.config = cfg
@@ -123,6 +123,7 @@ func (p *diProvider) ChatService(ctx context.Context) service.ChatService {
 			ctx,
 			p.MessageService(ctx),
 			p.ChatRepository(ctx),
+			p.KafkaProducer(ctx),
 		)
 	}
 
@@ -189,4 +190,12 @@ func (p *diProvider) AuthClient(ctx context.Context) authClient.AuthServiceClien
 	}
 
 	return p.authClient
+}
+
+func (p *diProvider) KafkaProducer(ctx context.Context) *kafkaProducer.KafkaProducer {
+	if p.kafkaProducer == nil {
+		p.kafkaProducer = kafkaProducer.New(ctx, p.Config(ctx).KafkaConfig.ConnectString())
+	}
+
+	return p.kafkaProducer
 }

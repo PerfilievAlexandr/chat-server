@@ -49,6 +49,7 @@ func (m *messageService) SaveMessage(ctx context.Context, req dto.SendMessageReq
 
 		return nil
 	})
+
 	if err != nil {
 		return domain.Message{}, err
 	}
