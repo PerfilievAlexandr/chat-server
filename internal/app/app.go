@@ -2,8 +2,11 @@ package app
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/IBM/sarama"
 	"github.com/PerfilievAlexandr/chat-server/internal/api/grpc/chat/interceptor"
 	"github.com/PerfilievAlexandr/chat-server/internal/config"
+	"github.com/PerfilievAlexandr/chat-server/internal/domain"
 	"github.com/PerfilievAlexandr/chat-server/internal/logger"
 	prometheusMetrics "github.com/PerfilievAlexandr/chat-server/internal/metrics"
 	"github.com/PerfilievAlexandr/chat-server/internal/tracing"
@@ -15,6 +18,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -22,9 +26,10 @@ import (
 )
 
 type App struct {
-	diProvider *diProvider
-	grpcServer *grpc.Server
-	prometheus *http.Server
+	diProvider    *diProvider
+	grpcServer    *grpc.Server
+	prometheus    *http.Server
+	kafkaConsumer sarama.Consumer
 }
 
 func NewApp(ctx context.Context) (*App, error) {
@@ -45,7 +50,7 @@ func (a *App) Run(ctx context.Context) error {
 	}()
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -65,6 +70,35 @@ func (a *App) Run(ctx context.Context) error {
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+
+		partConsumer, err := a.runKafkaConsumer(ctx)
+		if err != nil {
+			logger.Fatal("failed to run kafka consumer", zap.Any("err", err))
+		}
+
+		for {
+			select {
+			// (обработка входящего сообщения и отправка ответа в Kafka)
+			case msg, ok := <-partConsumer.Messages():
+				if !ok {
+					log.Println("Channel closed, exiting")
+					return
+				}
+
+				// Десериализация входящего сообщения из JSON
+				var receivedMessage domain.Message
+				err := json.Unmarshal(msg.Value, &receivedMessage)
+
+				if err != nil {
+					log.Printf("Error unmarshaling JSON: %v\n", err)
+					continue
+				}
+			}
+		}
+	}()
+
 	wg.Wait()
 
 	return nil
@@ -78,6 +112,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initPrometheus,
 		a.initTrace,
 		a.initGrpcServer,
+		a.initKafkaConsumer,
 	}
 
 	for _, f := range inits {
@@ -131,6 +166,28 @@ func (a *App) initLogger(_ context.Context) error {
 	logger.Init(core)
 
 	return nil
+}
+
+func (a *App) initKafkaConsumer(ctx context.Context) error {
+	consumer, err := sarama.NewConsumer([]string{a.diProvider.Config(ctx).KafkaConfig.ConnectString()}, nil)
+	if err != nil {
+		logger.Fatal("failed create kafka consumer", zap.Any("err", err))
+		return nil
+	}
+	a.kafkaConsumer = consumer
+
+	return nil
+}
+
+func (a *App) runKafkaConsumer(_ context.Context) (sarama.PartitionConsumer, error) {
+	logger.Info("Kafka consumer is running on:", zap.String("host:port", a.diProvider.config.KafkaConfig.ConnectString()))
+	partConsumer, err := a.kafkaConsumer.ConsumePartition("chat123", 0, sarama.OffsetNewest)
+	if err != nil {
+		logger.Fatal("Failed to consume partition", zap.Any("err", err))
+		return nil, err
+	}
+
+	return partConsumer, nil
 }
 
 func (a *App) runGrpcServer(ctx context.Context) error {
